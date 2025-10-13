@@ -48,10 +48,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 // Outlet은 routes.ts 파일 내에 있는 index("routes/dashboard.tsx")를 의미함
 export default function App() {
   return (
-    <>
+    <div className="py-20 px-5">
         <Navigation />
         <Outlet />
-    </>
+    </div>
     );
 }
 
