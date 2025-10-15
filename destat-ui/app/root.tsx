@@ -11,18 +11,22 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import Navigation from "~/components/navigation";
 
-export const links: Route.LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  },
-];
+import { createModal } from "@rabby-wallet/rabbykit";
+import { createConfig, http } from "@wagmi/core";
+import { hardhat } from "@wagmi/core/chains";
+
+export const config = createConfig(
+    {
+        chains: [hardhat],
+        transports: {
+            [hardhat.id]: http(),
+        }
+    },
+);
+
+export const rabbykit = createModal({
+    wagmi: config,
+});
 
 // root파일은 아래 Layout 함수를 먼저 실행함
 // Layout 함수는 children 랜더링함

@@ -7,6 +7,7 @@ import {
 } from "~/components/ui/navigation-menu";
 import {Link} from "react-router";
 import {Button} from "./ui/Button";
+import {rabbykit} from "~/root";
 
 export default function Navigation() {
     return (
@@ -148,7 +149,7 @@ export default function Navigation() {
                         </NavigationMenuItem>
                     </NavigationMenuList>
                 </NavigationMenu>
-                <Button>Connect</Button>
+                <Button onClick={() => {rabbykit.open()}}>Connect</Button>
             </div>
         </nav>
     )
