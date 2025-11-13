@@ -14,6 +14,8 @@ import Navigation from "~/components/navigation";
 import { createModal } from "@rabby-wallet/rabbykit";
 import { createConfig, http } from "@wagmi/core";
 import { hardhat } from "@wagmi/core/chains";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { WagmiProvider } from 'wagmi'
 
 export const config = createConfig(
     {
@@ -27,6 +29,8 @@ export const config = createConfig(
 export const rabbykit = createModal({
     wagmi: config,
 });
+
+const queryClient = new QueryClient()
 
 // root파일은 아래 Layout 함수를 먼저 실행함
 // Layout 함수는 children 랜더링함
@@ -53,8 +57,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <div className="py-20 px-20 h-screen">
-        <Navigation />
-        <Outlet />
+        <WagmiProvider config={config}>
+            <QueryClientProvider client={queryClient}>
+                <Navigation />
+                <Outlet />
+            </QueryClientProvider>
+        </WagmiProvider>
     </div>
     );
 }
