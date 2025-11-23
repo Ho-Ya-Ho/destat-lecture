@@ -1,3 +1,6 @@
+- npx hardhat node
+- npx hardhat ignition deploy ./ignition/modules/SurveyFactory.ts --network localhost
+
 # Sample Hardhat 3 Beta Project (`mocha` and `ethers`)
 
 This project showcases a Hardhat 3 Beta project using `mocha` for tests and the `ethers` library for Ethereum interactions.

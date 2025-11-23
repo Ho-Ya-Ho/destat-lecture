@@ -21,7 +21,7 @@ export const config = createConfig(
     {
         chains: [hardhat],
         transports: {
-            [hardhat.id]: http(),
+            [hardhat.id]: http("http://localhost:8545"),
         }
     },
 );
