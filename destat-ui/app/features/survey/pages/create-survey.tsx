@@ -16,9 +16,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     const {data, error} = await supabase.storage.from('images').upload(metadata.id, imageFile);
 
     if (!error) {
-        console.log("1");
         const publicUrl = await supabase.storage.from("images").getPublicUrl(data.path);
-        console.log("2");
         await supabase.from("survey").insert({
             id:metadata.id,
             title:metadata.title,
@@ -29,7 +27,6 @@ export const action = async ({ request }: Route.ActionArgs) => {
             questions:metadata.questions,
             owner:metadata.owner,
         });
-        console.log("3");
     }
 };
 
@@ -102,7 +99,6 @@ export default function createSurvey() {
             ],
             value: parseEther(poolSize),
         });
-        console.log(">>> hash right after writeContract =", hash);
 
         setSurveyMeta({
             title,
@@ -124,7 +120,6 @@ export default function createSurvey() {
                     data: log.data,
                     topics: log.topics,
                 });
-                console.log("event");
                 if (event.eventName === 'SurveyCreated') {
                     contractAddress = event.args.surveyAddress;
                 }
@@ -134,7 +129,6 @@ export default function createSurvey() {
                 ...surveyMeta,
                 id:contractAddress,
             }
-            console.log(newSurveyMeta);
             formData.append("metadata", JSON.stringify(newSurveyMeta))
             formData.append("image", formImage);
             await fetch(`/survey/create`, {
