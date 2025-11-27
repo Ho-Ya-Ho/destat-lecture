@@ -3,19 +3,47 @@ import { Button } from '~/components/ui/Button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
 import { Input } from '~/components/ui/input';
 import type { Route } from './+types/create-survey';
-import { useState, type FormEvent } from 'react';
-import { useWriteContract } from 'wagmi';
+import { useState, useEffect, type FormEvent } from 'react';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { SURVEY_FACTORY, SURVEY_FACTORY_ABI } from '../constant';
-import { parseEther } from 'viem';
+import { parseEther, decodeEventLog } from 'viem';
+import { supabase } from "~/postgres/supaclient";
+
 export const action = async ({ request }: Route.ActionArgs) => {
     const formData = await request.formData();
-    console.log(formData);
+    const metadata = JSON.parse(formData.get('metadata') as string);
+    const imageFile = formData.get('image') as File;
+    const {data, error} = await supabase.storage.from('images').upload(metadata.id, imageFile);
+
+    if (!error) {
+        console.log("1");
+        const publicUrl = await supabase.storage.from("images").getPublicUrl(data.path);
+        console.log("2");
+        await supabase.from("survey").insert({
+            id:metadata.id,
+            title:metadata.title,
+            description:metadata.description,
+            target_number:metadata.targetNumber,
+            reward_amount:metadata.rewardAmount,
+            image:publicUrl.data.publicUrl,
+            questions:metadata.questions,
+            owner:metadata.owner,
+        });
+        console.log("3");
+    }
 };
 
 export default function createSurvey() {
     const [options, setOptions] = useState([1]);
     const [image, setImage] = useState('');
-    const { writeContract } = useWriteContract();
+    const [formImage, setFormImage] = useState<File>();
+    const { data:hash, writeContract } = useWriteContract();
+    const { data:receipt, isFetched } = useWaitForTransactionReceipt({
+        hash,
+    });
+    const [surveyMeta, setSurveyMeta] = useState({});
+    const { address }  = useAccount();
+
     const uploadFile = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
             const file = e.target.files[0];
@@ -57,6 +85,8 @@ export default function createSurvey() {
         const description = formData.get('description') as string;
         const targetNumber = formData.get('target') as string;
         const poolSize = formData.get('pool') as string;
+        const formImg = formData.get('image') as File;
+        setFormImage(formImg);
 
         writeContract({
             address: SURVEY_FACTORY,
@@ -72,7 +102,49 @@ export default function createSurvey() {
             ],
             value: parseEther(poolSize),
         });
+        console.log(">>> hash right after writeContract =", hash);
+
+        setSurveyMeta({
+            title,
+            description,
+            targetNumber,
+            rewardAmount: Number(poolSize) / Number(targetNumber),
+            questions,
+            owner: address
+        });
     };
+
+    useEffect(() => {
+        if (!isFetched || !receipt || !formImage) return;
+        const callAction = async () => {
+            let contractAddress;
+            for (const log of receipt?.logs) {
+                const event = decodeEventLog({
+                    abi:SURVEY_FACTORY_ABI,
+                    data: log.data,
+                    topics: log.topics,
+                });
+                console.log("event");
+                if (event.eventName === 'SurveyCreated') {
+                    contractAddress = event.args.surveyAddress;
+                }
+            }
+            const formData = new FormData();
+            const newSurveyMeta = {
+                ...surveyMeta,
+                id:contractAddress,
+            }
+            console.log(newSurveyMeta);
+            formData.append("metadata", JSON.stringify(newSurveyMeta))
+            formData.append("image", formImage);
+            await fetch(`/survey/create`, {
+                method: 'POST',
+                body: formData,
+            });
+        };
+        callAction();
+    }, [receipt]);
+
     return (
         <div className="flex w-full h-full justify-center">
             <Card className="w-full max-w-xl">
