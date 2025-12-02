@@ -1,5 +1,5 @@
-import TrendCard from "../compoents/trend-card";
-import {TrendChart} from "../compoents/trend-chart";
+import TrendCard from "../components/trend-card";
+import {TrendChart} from "../components/trend-chart";
 import type { Route } from './+types/dashboard';
 import {supabase} from "~/postgres/supaclient";
 import {DateTime} from "luxon";
