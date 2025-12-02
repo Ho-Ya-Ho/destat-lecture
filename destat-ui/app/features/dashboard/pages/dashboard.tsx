@@ -1,14 +1,9 @@
-// [Number]
-// Visitors
-// Live Surveys
-// Archived Surveys
-
-// [Graph]
-// time x Live Surveys
-// time x Archived Surveys
-
 import TrendCard from "../compoents/trend-card";
 import {TrendChart} from "../compoents/trend-chart";
+import type { Route } from './+types/dashboard';
+import {supabase} from "~/postgres/supaclient";
+import {DateTime} from "luxon";
+import {getNumberData} from "../query";
 
 const data = [
     { date: "2025-10-01", data: 186 },
@@ -27,16 +22,51 @@ const data = [
     { date: "2025-10-14", data: 191 },
 ];
 
-export default function Dashboard() {
+export const loader = async ({request}:Route.LoaderArgs) => {
+    await supabase.rpc("increment_daily_visitor", {
+        day:DateTime.now().startOf('day').toISO({includeOffset:false}),
+    });
+    const lastWeekStart = DateTime.now()
+        .startOf("week")
+        .minus({week: 1})
+        .toISO({includeOffset:false});
+    const thisWeekStart = DateTime.now()
+        .startOf("week")
+        .toISO({includeOffset:false});
+    const thisWeekEnd = DateTime.now().toISO({includeOffset:false});
+    const {data: liveSurveyCount} = await supabase
+        .from("daily_live_survey")
+        .select("count, created_at").order("created_at");
+
+    let formedLivedSurveyCount = [{
+        date:"",
+        data:0
+    }];
+    if (liveSurveyCount) {
+        formedLivedSurveyCount = liveSurveyCount.map((c) => {
+            return {
+                date: c.created_at ?? "",
+                data: c.count
+            };
+        });
+    }
+    const numberCard = await getNumberData(lastWeekStart, thisWeekStart, thisWeekEnd);
+    return {
+        ...numberCard,
+        formedLivedSurveyCount
+    }
+};
+
+export default function Dashboard({loaderData}: Route.ComponentProps) {
     return (
         <div className="mt-10 flex w-full flex-col gap-8">
             <div className="grid w-full gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 <TrendCard
                     title={"Total Visitors"}
-                    value={"123"}
-                    trendValue={"200%"}
-                    trendMessage={"Trending up"}
-                    periodMessage={"last 6 months"}
+                    value={loaderData.value}
+                    trendValue={loaderData.trendValue + "%"}
+                    trendMessage={loaderData.upAndDown ? "Trending up" : "Trending down"}
+                    periodMessage={"last 7 days"}
                 />
                 <TrendCard
                     title={"Live Surveys"}
@@ -59,7 +89,7 @@ export default function Dashboard() {
                     description={"daily live survey count"}
                     trendMessage={"Trending up by 5.2% this month"}
                     periodMessage={"October 1 - October 14, 2025"}
-                    chartData={data}
+                    chartData={loaderData.formedLivedSurveyCount}
                 />
                 <TrendChart
                     title={"Archived Surveys"}

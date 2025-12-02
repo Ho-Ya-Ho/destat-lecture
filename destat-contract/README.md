@@ -1,5 +1,6 @@
 - npx hardhat node
 - npx hardhat ignition deploy ./ignition/modules/SurveyFactory.ts --network localhost
+- npx hardhat ignition deploy ./ignition/modules/SurveyFactory.ts --network kairos
 
 # Sample Hardhat 3 Beta Project (`mocha` and `ethers`)
 

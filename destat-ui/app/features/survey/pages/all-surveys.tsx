@@ -4,6 +4,8 @@ import {hardhat} from "@wagmi/core/chains";
 import {http} from "@wagmi/core";
 import {SURVEY_ABI, SURVEY_FACTORY, SURVEY_FACTORY_ABI} from "~/features/survey/constant";
 import {useEffect, useState} from "react";
+import {supabase} from "~/postgres/supaclient";
+import type { Route } from './+types/all-surveys';
 
 interface surveyMeta {
     title: string;
@@ -14,8 +16,29 @@ interface surveyMeta {
     address: string;
 }
 
-export default function AllSurveys() {
-    const [surveys, setSurveys] = useState<surveyMeta[]>([]);
+export const loader = async ({request}:Route.LoaderArgs) => {
+    const {data, error} = await supabase
+        .from("all_survey_overview")
+        .select(("*"));
+
+    if (!error) {
+        return data.map((s) => {
+            return {
+                title:s.title!,
+                description:s.description!,
+                count:s.count!,
+                view:s.view,
+                image:s.image,
+                address:s.id!
+            }
+        });
+    } else {
+        return [];
+    }
+}
+
+export default function AllSurveys({ loaderData }: Route.ComponentProps) {
+    const [surveys, setSurveys] = useState<surveyMeta[]>(loaderData);
 
     const onChainLoader = async () => {
         const client = createPublicClient({
@@ -38,36 +61,27 @@ export default function AllSurveys() {
                 const title = await surveyContract.read.title();
                 const description = await surveyContract.read.description();
                 const answer = await surveyContract.read.getAnswers();
-                return {title, description, count:answer.length, view:null, image:null, address:surveyAddress};
-        }));
+                return {
+                    title,
+                    description,
+                    count:answer.length,
+                    view:null,
+                    image:null,
+                    address:surveyAddress
+                };
+            })
+        );
         return surveyMetaData;
     };
 
-    const offChainLoader = async (): Promise<surveyMeta[]> => {
-        return [{
-            title: "test title",
-            description: "test description",
-            count: 10,
-            view: 1600,
-            image: "https://picsum.photos/200/300?random=1",
-            address: "null"
-        }];
-    }
-
-    useEffect(() => {
-        const onchainData = async () => {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const onchainSurveys = await onChainLoader()
-            setSurveys(onchainSurveys);
-        };
-        onchainData();
-
-        const offchainData = async () => {
-            const offchainSurveys = await offChainLoader()
-            setSurveys(offchainSurveys);
-        };
-        offchainData();
-    }, []);
+    // useEffect(() => {
+    //     const onchainData = async () => {
+    //         await new Promise(resolve => setTimeout(resolve, 3000));
+    //         const onchainSurveys = await onChainLoader()
+    //         setSurveys(onchainSurveys);
+    //     };
+    //     onchainData();
+    // }, []);
 
     return (
         <div className={"grid grid-cols-4 gap-4"}>
@@ -79,9 +93,9 @@ export default function AllSurveys() {
                 <SurveyCard
                     title={survey.title}
                     description={survey.description}
-                    view={1600}
+                    view={survey.view!}
                     count={survey.count}
-                    image={"https://picsum.photos/200/300?random=1"}
+                    image={survey.image!}
                     address={survey.address}
                 />
             ))}
