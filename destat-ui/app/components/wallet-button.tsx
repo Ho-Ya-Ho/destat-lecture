@@ -22,14 +22,6 @@ export default function WalletButton() {
         <>
             {isConnected ? (
                 <div className="flex items-center gap-2">
-                    {chainId !== hardhat.id && (
-                        <Button 
-                            onClick={() => switchChain({ chainId: hardhat.id })}
-                            variant="outline"
-                        >
-                            Switch to Hardhat
-                        </Button>
-                    )}
                     <Button onClick={() => disconnect()}>Disconnect</Button>
                 </div>
             ) : (
