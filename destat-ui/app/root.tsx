@@ -22,7 +22,7 @@ export const config = createConfig(
         chains: [hardhat, kairos],
         transports: {
             [hardhat.id]: http(),
-            [kairos.id]: http(),
+            [kairos.id]: http('https://public-en-kairos.node.kaia.io'),
         }
     },
 );
