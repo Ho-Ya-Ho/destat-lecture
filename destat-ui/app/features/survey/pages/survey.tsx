@@ -72,11 +72,6 @@ export default function Survey({ params }: Route.ComponentProps) {
         abi: SURVEY_ABI,
         args: [],
     });
-    console.log(title);
-    console.log(description);
-    console.log(target);
-    console.log(questions);
-    console.log(answers);
     const [counts, setCounts] = useState<Number[][]>([]);
     const [isAnswered, setIsAnswered] = useState(false);
     const { address } = useAccount();
