@@ -64,7 +64,7 @@ export default function Dashboard({loaderData}: Route.ComponentProps) {
                 <TrendCard
                     title={"Total Visitors"}
                     value={loaderData.value}
-                    trendValue={Math.trunc(Number(loaderData.trendValue)) + "%"}
+                    trendValue={parseInt(loaderData.trendValue, 10) + "%"}
                     trendMessage={loaderData.upAndDown ? "Trending up" : "Trending down"}
                     periodMessage={"last 7 days"}
                 />
